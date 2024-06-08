@@ -1,0 +1,8 @@
+version: "3"
+services:
+  original:
+    build:
+      context: .
+      dockerfile: docker/original/Dockerfile
+    tty: true
+    stdin_open: true
