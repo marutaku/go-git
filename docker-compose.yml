@@ -6,3 +6,9 @@ services:
       dockerfile: docker/original/Dockerfile
     tty: true
     stdin_open: true
+  go-git:
+    build:
+      context: .
+      dockerfile: docker/go-git/Dockerfile
+    tty: true
+    stdin_open: true
