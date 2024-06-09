@@ -12,7 +12,7 @@ func main() {
 		fmt.Fprintf(os.Stderr, "error: %v\n", err)
 		os.Exit(1)
 	}
-	sha1Dir := internal.DEFAULT_DB_ENVIRONMENT
+	sha1Dir := internal.GetSHA1FileDirectory()
 	if err := os.Mkdir(sha1Dir, 0700); err != nil {
 		fmt.Fprintf(os.Stderr, "error: %v\n", err)
 		os.Exit(1)
