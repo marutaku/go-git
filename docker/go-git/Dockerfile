@@ -1,7 +1,7 @@
 FROM golang:1.22
 
 
-RUN apt-get update && apt-get install -y make
+RUN apt-get update && apt-get install -y make bsdmainutils
 
 WORKDIR /go/go-git/
 COPY ./cmd ./cmd

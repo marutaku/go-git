@@ -37,7 +37,7 @@ var activeCache ActiveCache
 
 func addCacheEntry(entry *cache.CacheEntry) error {
 	existingEntryIndex := activeCache.findCacheEntryIndex(entry.Name)
-	if existingEntryIndex == -1 {
+	if existingEntryIndex != -1 {
 		activeCache[existingEntryIndex] = entry
 		return nil
 	}

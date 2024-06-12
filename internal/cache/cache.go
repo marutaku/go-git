@@ -9,17 +9,13 @@ import (
 	"syscall"
 
 	"github.com/marutaku/go-git/internal/buffer"
+	"github.com/marutaku/go-git/internal/cache/cachetime"
 	"github.com/marutaku/go-git/internal/env"
 )
 
-type CacheTime struct {
-	Sec  uint32
-	NSec uint32
-}
-
 type CacheEntry struct {
-	CTime  CacheTime
-	MTime  CacheTime
+	CTime  cachetime.CacheTime
+	MTime  cachetime.CacheTime
 	STDev  uint32
 	STIno  uint32
 	STMode uint32
@@ -62,14 +58,9 @@ func NewCacheEntryFromFilePath(path string) (*CacheEntry, error) {
 	if err != nil {
 		return nil, err
 	}
-	ctime := &CacheTime{
-		Sec:  uint32(fileStat.Sys().(*syscall.Stat_t).Ctimespec.Sec),
-		NSec: uint32(fileStat.Sys().(*syscall.Stat_t).Ctimespec.Nsec),
-	}
-	mtime := &CacheTime{
-		Sec:  uint32(fileStat.Sys().(*syscall.Stat_t).Mtimespec.Sec),
-		NSec: uint32(fileStat.Sys().(*syscall.Stat_t).Mtimespec.Nsec),
-	}
+	// https://github.com/golang/go/issues/29393
+	ctime := cachetime.NewCTimeFromStat(fileStat)
+	mtime := cachetime.NewMTimeFromStat(fileStat)
 	entry := &CacheEntry{
 		CTime:  *ctime,
 		MTime:  *mtime,

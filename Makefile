@@ -1,7 +1,7 @@
 
 BIN_DIR=bin
 
-PROG=init-db
+PROG=init-db update-cache
 
 all: ${PROG}
 
