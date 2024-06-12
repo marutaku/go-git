@@ -30,6 +30,23 @@ type CacheEntry struct {
 	Name   string
 }
 
+func (e *CacheEntry) Bytes() []byte {
+	bytes := make([]byte, 0)
+	bytes = append(bytes, byte(e.CTime.Sec))
+	bytes = append(bytes, byte(e.CTime.NSec))
+	bytes = append(bytes, byte(e.MTime.Sec))
+	bytes = append(bytes, byte(e.MTime.NSec))
+	bytes = append(bytes, byte(e.STDev))
+	bytes = append(bytes, byte(e.STIno))
+	bytes = append(bytes, byte(e.STMode))
+	bytes = append(bytes, byte(e.STUid))
+	bytes = append(bytes, byte(e.STGid))
+	bytes = append(bytes, byte(e.STSize))
+	bytes = append(bytes, e.Sha1[:]...)
+	bytes = append(bytes, []byte(e.Name)...)
+	return bytes
+}
+
 func IndexFd(nameLen int, entry *CacheEntry, fileContent string, stat fs.FileInfo) {
 	contents := []byte(fmt.Sprintf("blob %d", stat.Size()))
 	contents = append(contents, 0)

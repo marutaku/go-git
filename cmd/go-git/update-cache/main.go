@@ -21,10 +21,16 @@ func (ac ActiveCache) findCacheEntryIndex(path string) int {
 	return -1
 }
 
-func (ac ActiveCache) writeCache(file *os.File) *cache.CacheEntry {
+func (ac ActiveCache) writeCache(file *os.File) error {
 	// SHA1ハッシュとる箇所の自信がない
 	header := cache.NewCacheHeader(1, ac)
-	
+	headerBytes := header.Bytes()
+	file.Write(headerBytes)
+	for _, entry := range ac {
+		entryBytes := entry.Bytes()
+		file.Write(entryBytes)
+	}
+	return nil
 }
 
 var activeCache ActiveCache
@@ -71,6 +77,10 @@ func verifyPath(path string) bool {
 	return true
 }
 
+func renameIndexFile() {
+	os.Rename(".dircache/index.lock", ".dircache/index")
+}
+
 func main() {
 	targetPaths := os.Args[1:]
 	entries, err := cache.ReadCache()
@@ -85,7 +95,8 @@ func main() {
 	if err != nil {
 		log.Fatal("unable to create new cache file")
 	}
-
+	defer newIndexFile.Close()
+	defer renameIndexFile()
 	for _, path := range targetPaths {
 		if !verifyPath(path) {
 			fmt.Printf("Ignoring path %s\n", path)
@@ -94,6 +105,10 @@ func main() {
 		if err := addFileToCache(path); err != nil {
 			log.Fatalf("Unable to add %s to database\n", path)
 		}
+	}
+	err = activeCache.writeCache(newIndexFile)
+	if err != nil {
+		log.Fatal("unable to write cache")
 	}
 
 }
