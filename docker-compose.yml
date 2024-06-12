@@ -12,3 +12,6 @@ services:
       dockerfile: docker/go-git/Dockerfile
     tty: true
     stdin_open: true
+    volumes:
+      - .:/go/go-git/
+      - /go/go-git/bin/
