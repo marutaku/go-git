@@ -1,6 +1,8 @@
 package cache
 
-import "crypto/sha1"
+import (
+	"crypto/sha1"
+)
 
 const CACHE_SIGNATURE = "DIRC"
 

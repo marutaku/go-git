@@ -1,6 +1,8 @@
 package cache
 
 import (
+	"bytes"
+	"compress/zlib"
 	"crypto/sha1"
 	"errors"
 	"fmt"
@@ -8,7 +10,7 @@ import (
 	"os"
 	"syscall"
 
-	"github.com/marutaku/go-git/internal/buffer"
+	objectBuffer "github.com/marutaku/go-git/internal/buffer"
 	"github.com/marutaku/go-git/internal/cache/cachetime"
 	"github.com/marutaku/go-git/internal/env"
 )
@@ -43,14 +45,22 @@ func (e *CacheEntry) Bytes() []byte {
 	return bytes
 }
 
-func IndexFd(nameLen int, entry *CacheEntry, fileContent string, stat fs.FileInfo) {
+func IndexFd(nameLen int, entry *CacheEntry, fileContent string, stat fs.FileInfo) error {
 	contents := []byte(fmt.Sprintf("blob %d", stat.Size()))
 	contents = append(contents, 0)
 	contents = append(contents, []byte(fileContent)...)
+	var buffer bytes.Buffer
+	zWriter := zlib.NewWriter(&buffer)
+	zWriter, err := zlib.NewWriterLevel(zWriter, zlib.BestCompression)
+	if err != nil {
+		return err
+	}
+	zWriter.Write(contents)
 	h := sha1.New()
 	h.Write(contents)
-	bs := h.Sum(nil)
-	buffer.WriteSha1Buffer(bs, contents)
+	sha1Bytes := h.Sum(nil)
+	objectBuffer.WriteSha1Buffer(sha1Bytes, buffer.Bytes())
+	return nil
 }
 
 func NewCacheEntryFromFilePath(path string) (*CacheEntry, error) {

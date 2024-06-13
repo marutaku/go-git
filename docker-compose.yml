@@ -15,3 +15,4 @@ services:
     volumes:
       - .:/go/go-git/
       - /go/go-git/bin/
+      - /go/go-git/.dircache
