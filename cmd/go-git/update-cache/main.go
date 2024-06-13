@@ -91,7 +91,7 @@ func main() {
 		log.Fatal("cache corrupted")
 	}
 
-	newIndexFile, err := os.Create(".dircache/index.lock")
+	newIndexFile, err := os.OpenFile(".dircache/index.lock", os.O_RDWR|os.O_CREATE|os.O_EXCL, 0666)
 	if err != nil {
 		log.Fatal("unable to create new cache file")
 	}
