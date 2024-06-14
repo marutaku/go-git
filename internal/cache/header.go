@@ -4,7 +4,7 @@ import (
 	"crypto/sha1"
 )
 
-const CACHE_SIGNATURE = "DIRC"
+const CACHE_SIGNATURE = "CRID" // 本当は"DIRC"だが、なぜか本家は"CRID"になっている...？
 
 type CacheHeader struct {
 	Signature string

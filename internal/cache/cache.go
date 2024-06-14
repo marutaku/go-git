@@ -48,7 +48,7 @@ func (e *CacheEntry) Bytes() []byte {
 }
 
 func (e *CacheEntry) IndexFd(fileContent string, stat fs.FileInfo) error {
-	contents := []byte(fmt.Sprintf("blob %d", stat.Size()))
+	contents := []byte(fmt.Sprintf("blob %d", uint32(stat.Size())))
 	contents = append(contents, 0)
 	contents = append(contents, []byte(fileContent)...)
 	var buffer bytes.Buffer
@@ -62,24 +62,6 @@ func (e *CacheEntry) IndexFd(fileContent string, stat fs.FileInfo) error {
 	h.Write(contents)
 	sha1Bytes := h.Sum(nil)
 	e.Sha1 = sha1Bytes
-	objectBuffer.WriteSha1Buffer(sha1Bytes, buffer.Bytes())
-	return nil
-}
-
-func IndexFd(nameLen int, entry *CacheEntry, fileContent string, stat fs.FileInfo) error {
-	contents := []byte(fmt.Sprintf("blob %d", stat.Size()))
-	contents = append(contents, 0)
-	contents = append(contents, []byte(fileContent)...)
-	var buffer bytes.Buffer
-	zWriter := zlib.NewWriter(&buffer)
-	zWriter, err := zlib.NewWriterLevel(zWriter, zlib.BestCompression)
-	if err != nil {
-		return err
-	}
-	zWriter.Write(contents)
-	h := sha1.New()
-	h.Write(contents)
-	sha1Bytes := h.Sum(nil)
 	objectBuffer.WriteSha1Buffer(sha1Bytes, buffer.Bytes())
 	return nil
 }
