@@ -16,16 +16,17 @@ import (
 )
 
 type CacheEntry struct {
-	CTime  cachetime.CacheTime
-	MTime  cachetime.CacheTime
-	STDev  uint32
-	STIno  uint32
-	STMode uint32
-	STUid  uint32
-	STGid  uint32
-	STSize uint32
-	Sha1   [20]byte
-	Name   string
+	CTime   cachetime.CacheTime
+	MTime   cachetime.CacheTime
+	STDev   uint32
+	STIno   uint32
+	STMode  uint32
+	STUid   uint32
+	STGid   uint32
+	STSize  uint32
+	Sha1    [20]byte
+	NameLen uint16
+	Name    string
 }
 
 func (e *CacheEntry) Bytes() []byte {
@@ -41,6 +42,7 @@ func (e *CacheEntry) Bytes() []byte {
 	bytes = append(bytes, byte(e.STGid))
 	bytes = append(bytes, byte(e.STSize))
 	bytes = append(bytes, e.Sha1[:]...)
+	bytes = append(bytes, byte(e.NameLen))
 	bytes = append(bytes, []byte(e.Name)...)
 	return bytes
 }
@@ -72,15 +74,16 @@ func NewCacheEntryFromFilePath(path string) (*CacheEntry, error) {
 	ctime := cachetime.NewCTimeFromStat(fileStat)
 	mtime := cachetime.NewMTimeFromStat(fileStat)
 	entry := &CacheEntry{
-		CTime:  *ctime,
-		MTime:  *mtime,
-		STDev:  uint32(fileStat.Sys().(*syscall.Stat_t).Dev),
-		STIno:  uint32(fileStat.Sys().(*syscall.Stat_t).Ino),
-		STMode: uint32(fileStat.Sys().(*syscall.Stat_t).Mode),
-		STUid:  uint32(fileStat.Sys().(*syscall.Stat_t).Uid),
-		STGid:  uint32(fileStat.Sys().(*syscall.Stat_t).Gid),
-		STSize: uint32(fileStat.Size()),
-		Name:   path,
+		CTime:   *ctime,
+		MTime:   *mtime,
+		STDev:   uint32(fileStat.Sys().(*syscall.Stat_t).Dev),
+		STIno:   uint32(fileStat.Sys().(*syscall.Stat_t).Ino),
+		STMode:  uint32(fileStat.Sys().(*syscall.Stat_t).Mode),
+		STUid:   uint32(fileStat.Sys().(*syscall.Stat_t).Uid),
+		STGid:   uint32(fileStat.Sys().(*syscall.Stat_t).Gid),
+		STSize:  uint32(fileStat.Size()),
+		NameLen: uint16(len(path)),
+		Name:    path,
 	}
 	return entry, nil
 }
