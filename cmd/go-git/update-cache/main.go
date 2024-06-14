@@ -63,7 +63,7 @@ func addFileToCache(path string) error {
 	if err != nil {
 		return err
 	}
-	cache.IndexFd(len(entry.Name), entry, string(fileContent), stat)
+	entry.IndexFd(string(fileContent), stat)
 	return addCacheEntry(entry)
 }
 

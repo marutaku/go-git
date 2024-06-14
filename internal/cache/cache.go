@@ -24,7 +24,7 @@ type CacheEntry struct {
 	STUid   uint32
 	STGid   uint32
 	STSize  uint32
-	Sha1    [20]byte
+	Sha1    []byte
 	NameLen uint16
 	Name    string
 }
@@ -45,6 +45,25 @@ func (e *CacheEntry) Bytes() []byte {
 	bytes = append(bytes, byte(e.NameLen))
 	bytes = append(bytes, []byte(e.Name)...)
 	return bytes
+}
+
+func (e *CacheEntry) IndexFd(fileContent string, stat fs.FileInfo) error {
+	contents := []byte(fmt.Sprintf("blob %d", stat.Size()))
+	contents = append(contents, 0)
+	contents = append(contents, []byte(fileContent)...)
+	var buffer bytes.Buffer
+	zWriter := zlib.NewWriter(&buffer)
+	zWriter, err := zlib.NewWriterLevel(zWriter, zlib.BestCompression)
+	if err != nil {
+		return err
+	}
+	zWriter.Write(contents)
+	h := sha1.New()
+	h.Write(contents)
+	sha1Bytes := h.Sum(nil)
+	e.Sha1 = sha1Bytes
+	objectBuffer.WriteSha1Buffer(sha1Bytes, buffer.Bytes())
+	return nil
 }
 
 func IndexFd(nameLen int, entry *CacheEntry, fileContent string, stat fs.FileInfo) error {
