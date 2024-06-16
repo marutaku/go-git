@@ -2,6 +2,7 @@ package cache
 
 import (
 	"crypto/sha1"
+	"encoding/binary"
 )
 
 const CACHE_SIGNATURE = "CRID" // 本当は"DIRC"だが、なぜか本家は"CRID"になっている...？
@@ -23,7 +24,8 @@ func NewCacheHeader(version uint32, entries []*CacheEntry) *CacheHeader {
 func (h *CacheHeader) Bytes() []byte {
 	bytes := make([]byte, 0)
 	bytes = append(bytes, h.Signature...)
-	bytes = append(bytes, byte(h.Version))
+	bytes = binary.LittleEndian.AppendUint32(bytes, h.Version)
+	bytes = binary.LittleEndian.AppendUint32(bytes, uint32(len(h.Entries)))
 	hash := sha1.New()
 	hash.Write(bytes)
 	for _, e := range h.Entries {

@@ -11,4 +11,6 @@ COPY Makefile .
 
 RUN go mod tidy && make all
 
+ENV SHA1_FILE_DIRECTORY=/tmp/.dircache
+
 CMD [ "/bin/bash" ]

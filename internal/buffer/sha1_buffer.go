@@ -19,7 +19,8 @@ func getSha1FileName(sha1 []byte) string {
 
 func WriteSha1Buffer(sha1 []byte, buffer []byte) error {
 	fileName := getSha1FileName(sha1)
-	file, err := os.Open(fileName)
+	fmt.Println(fileName)
+	file, err := os.OpenFile(fileName, os.O_RDWR|os.O_CREATE|os.O_EXCL, 0666)
 	if err != nil {
 		return err
 	}

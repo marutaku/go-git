@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"compress/zlib"
 	"crypto/sha1"
+	"encoding/binary"
 	"errors"
 	"fmt"
 	"io/fs"
@@ -31,18 +32,18 @@ type CacheEntry struct {
 
 func (e *CacheEntry) Bytes() []byte {
 	bytes := make([]byte, 0)
-	bytes = append(bytes, byte(e.CTime.Sec))
-	bytes = append(bytes, byte(e.CTime.NSec))
-	bytes = append(bytes, byte(e.MTime.Sec))
-	bytes = append(bytes, byte(e.MTime.NSec))
-	bytes = append(bytes, byte(e.STDev))
-	bytes = append(bytes, byte(e.STIno))
-	bytes = append(bytes, byte(e.STMode))
-	bytes = append(bytes, byte(e.STUid))
-	bytes = append(bytes, byte(e.STGid))
-	bytes = append(bytes, byte(e.STSize))
+	bytes = binary.LittleEndian.AppendUint32(bytes, e.CTime.Sec)
+	bytes = binary.LittleEndian.AppendUint32(bytes, e.CTime.NSec)
+	bytes = binary.LittleEndian.AppendUint32(bytes, e.MTime.Sec)
+	bytes = binary.LittleEndian.AppendUint32(bytes, e.MTime.NSec)
+	bytes = binary.LittleEndian.AppendUint32(bytes, e.STDev)
+	bytes = binary.LittleEndian.AppendUint32(bytes, e.STIno)
+	bytes = binary.LittleEndian.AppendUint32(bytes, e.STMode)
+	bytes = binary.LittleEndian.AppendUint32(bytes, e.STUid)
+	bytes = binary.LittleEndian.AppendUint32(bytes, e.STGid)
+	bytes = binary.LittleEndian.AppendUint32(bytes, e.STSize)
 	bytes = append(bytes, e.Sha1[:]...)
-	bytes = append(bytes, byte(e.NameLen))
+	bytes = binary.LittleEndian.AppendUint16(bytes, e.NameLen)
 	bytes = append(bytes, []byte(e.Name)...)
 	return bytes
 }
@@ -62,8 +63,7 @@ func (e *CacheEntry) IndexFd(fileContent string, stat fs.FileInfo) error {
 	h.Write(contents)
 	sha1Bytes := h.Sum(nil)
 	e.Sha1 = sha1Bytes
-	objectBuffer.WriteSha1Buffer(sha1Bytes, buffer.Bytes())
-	return nil
+	return objectBuffer.WriteSha1Buffer(sha1Bytes, buffer.Bytes())
 }
 
 func NewCacheEntryFromFilePath(path string) (*CacheEntry, error) {
@@ -87,6 +87,24 @@ func NewCacheEntryFromFilePath(path string) (*CacheEntry, error) {
 		Name:    path,
 	}
 	return entry, nil
+}
+
+func NewCacheEntryFromBinary(indexFileBytes []byte) (*CacheEntry, uint32) {
+	entry := &CacheEntry{}
+	entry.CTime.Sec = binary.LittleEndian.Uint32(indexFileBytes)
+	entry.CTime.NSec = binary.LittleEndian.Uint32(indexFileBytes[4:])
+	entry.MTime.Sec = binary.LittleEndian.Uint32(indexFileBytes[8:])
+	entry.MTime.NSec = binary.LittleEndian.Uint32(indexFileBytes[12:])
+	entry.STDev = binary.LittleEndian.Uint32(indexFileBytes[16:])
+	entry.STIno = binary.LittleEndian.Uint32(indexFileBytes[20:])
+	entry.STMode = binary.LittleEndian.Uint32(indexFileBytes[24:])
+	entry.STUid = binary.LittleEndian.Uint32(indexFileBytes[28:])
+	entry.STGid = binary.LittleEndian.Uint32(indexFileBytes[32:])
+	entry.STSize = binary.LittleEndian.Uint32(indexFileBytes[36:])
+	entry.Sha1 = indexFileBytes[40:60]
+	entry.NameLen = binary.LittleEndian.Uint16(indexFileBytes[60:])
+	entry.Name = string(indexFileBytes[62 : 62+entry.NameLen])
+	return entry, uint32(62 + entry.NameLen)
 }
 
 func ReadCache() (int, error) {

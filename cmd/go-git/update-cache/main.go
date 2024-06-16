@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/marutaku/go-git/internal/cache"
+	"github.com/marutaku/go-git/internal/env"
 )
 
 type ActiveCache []*cache.CacheEntry
@@ -63,7 +64,10 @@ func addFileToCache(path string) error {
 	if err != nil {
 		return err
 	}
-	entry.IndexFd(string(fileContent), stat)
+	err = entry.IndexFd(string(fileContent), stat)
+	if err != nil {
+		return err
+	}
 	return addCacheEntry(entry)
 }
 
@@ -78,7 +82,9 @@ func verifyPath(path string) bool {
 }
 
 func renameIndexFile() {
-	os.Rename(".dircache/index.lock", ".dircache/index")
+	srcIndexFilePath := fmt.Sprintf("%s/index.lock", env.GetSHA1FileDirectory())
+	dstIndexFilePath := fmt.Sprintf("%s/index", env.GetSHA1FileDirectory())
+	os.Rename(srcIndexFilePath, dstIndexFilePath)
 }
 
 func main() {
@@ -91,9 +97,9 @@ func main() {
 		log.Fatal("cache corrupted")
 	}
 
-	newIndexFile, err := os.OpenFile(".dircache/index.lock", os.O_RDWR|os.O_CREATE|os.O_EXCL, 0666)
+	newIndexFile, err := os.OpenFile(fmt.Sprintf("%s/index.lock", env.GetSHA1FileDirectory()), os.O_RDWR|os.O_CREATE|os.O_EXCL, 0666)
 	if err != nil {
-		log.Fatal("unable to create new cache file")
+		panic(err)
 	}
 	defer newIndexFile.Close()
 	defer renameIndexFile()
@@ -103,7 +109,7 @@ func main() {
 			continue
 		}
 		if err := addFileToCache(path); err != nil {
-			log.Fatalf("Unable to add %s to database\n", path)
+			panic(err)
 		}
 	}
 	err = activeCache.writeCache(newIndexFile)

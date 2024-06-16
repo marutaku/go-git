@@ -8,10 +8,6 @@ import (
 )
 
 func main() {
-	if err := os.Mkdir(".dircache", 0700); err != nil {
-		fmt.Fprintf(os.Stderr, "error: %v\n", err)
-		os.Exit(1)
-	}
 	sha1Dir := env.GetSHA1FileDirectory()
 	if err := os.Mkdir(sha1Dir, 0700); err != nil {
 		fmt.Fprintf(os.Stderr, "error: %v\n", err)
