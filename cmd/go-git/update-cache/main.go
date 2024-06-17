@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 	"log"
 	"os"
@@ -41,7 +42,11 @@ func addFileToCache(path string) error {
 	if err != nil {
 		return err
 	}
-	if activeCache.FindCacheEntryIndex(entry) != -1 {
+	if index := activeCache.FindCacheEntryIndex(entry); index != -1 {
+		if bytes.Equal(entry.Sha1, activeCache[index].Sha1) {
+			// 全く同じであれば何もしない
+			return nil
+		}
 		return addCacheEntry(entry)
 	}
 	err = entry.IndexFd(fileContent, stat)

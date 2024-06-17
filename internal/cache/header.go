@@ -5,7 +5,6 @@ import (
 	"crypto/sha1"
 	"encoding/binary"
 	"errors"
-	"fmt"
 )
 
 const CACHE_SIGNATURE = "CRID" // 本当は"DIRC"だが、なぜか本家は"CRID"になっている...？
@@ -32,8 +31,6 @@ func (h *CacheHeader) Verify(expectSha1 []byte) error {
 		return errors.New("bad version")
 	}
 	if !bytes.Equal(h.Sha1Hash(), expectSha1) {
-		fmt.Printf("%x\n", h.Sha1Hash())
-		fmt.Printf("%x\n", expectSha1)
 		return errors.New("bad header sha1")
 	}
 	return nil
