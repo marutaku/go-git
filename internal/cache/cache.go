@@ -137,7 +137,10 @@ func ReadCache() (ActiveCache, error) {
 	if err != nil {
 		return nil, err
 	}
-	header := NewCacheHeaderFromBytes(bytes)
+	header, err := NewCacheHeaderFromBytes(bytes)
+	if err != nil {
+		return nil, err
+	}
 	return header.Entries, nil
 }
 
