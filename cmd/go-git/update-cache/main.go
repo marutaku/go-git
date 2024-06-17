@@ -29,6 +29,7 @@ func addFileToCache(path string) error {
 	if err != nil {
 		return err
 	}
+	defer file.Close()
 	stat, err := file.Stat()
 	if err != nil {
 		return err
@@ -79,23 +80,26 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	newIndexFile, err := os.OpenFile(fmt.Sprintf("%s/index.lock", env.GetSHA1FileDirectory()), os.O_RDWR|os.O_CREATE|os.O_EXCL, 0666)
+	tmpIndexFilePath := fmt.Sprintf("%s/index.lock", env.GetSHA1FileDirectory())
+	newIndexFile, err := os.OpenFile(tmpIndexFilePath, os.O_RDWR|os.O_CREATE|os.O_EXCL, 0666)
 	if err != nil {
 		panic(err)
 	}
 	defer newIndexFile.Close()
-	defer renameIndexFile()
 	for _, path := range targetPaths {
 		if !verifyPath(path) {
 			continue
 		}
 		if err := addFileToCache(path); err != nil {
-			panic(err)
+			os.Remove(tmpIndexFilePath)
+			log.Fatal(err)
 		}
 	}
 	err = activeCache.WriteCache(newIndexFile)
 	if err != nil {
-		log.Fatal("unable to write cache")
+		os.Remove(tmpIndexFilePath)
+		log.Fatal("unable to write cache: ", err)
 	}
+	renameIndexFile()
 
 }
