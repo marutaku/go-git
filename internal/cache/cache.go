@@ -48,7 +48,7 @@ func (e *CacheEntry) Bytes() []byte {
 	return bytes
 }
 
-func (e *CacheEntry) IndexFd(fileContent string, stat fs.FileInfo) error {
+func calculateSha1Hash(stat fs.FileInfo, fileContent []byte) ([]byte, error) {
 	contents := []byte(fmt.Sprintf("blob %d", uint32(stat.Size())))
 	contents = append(contents, 0)
 	contents = append(contents, []byte(fileContent)...)
@@ -56,18 +56,35 @@ func (e *CacheEntry) IndexFd(fileContent string, stat fs.FileInfo) error {
 	zWriter := zlib.NewWriter(&buffer)
 	zWriter, err := zlib.NewWriterLevel(zWriter, zlib.BestCompression)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	zWriter.Write(contents)
 	h := sha1.New()
 	h.Write(contents)
 	sha1Bytes := h.Sum(nil)
-	e.Sha1 = sha1Bytes
-	return objectBuffer.WriteSha1Buffer(sha1Bytes, buffer.Bytes())
+	return sha1Bytes, nil
 }
 
-func NewCacheEntryFromFilePath(path string) (*CacheEntry, error) {
+func (e *CacheEntry) IndexFd(fileContent []byte, stat fs.FileInfo) error {
+	contents := []byte(fmt.Sprintf("blob %d", uint32(stat.Size())))
+	contents = append(contents, 0)
+	contents = append(contents, fileContent...)
+	var buffer bytes.Buffer
+	zWriter := zlib.NewWriter(&buffer)
+	zWriter, err := zlib.NewWriterLevel(zWriter, zlib.BestCompression)
+	if err != nil {
+		return err
+	}
+	zWriter.Write(contents)
+	return objectBuffer.WriteSha1Buffer(e.Sha1, buffer.Bytes())
+}
+
+func NewCacheEntryFromFilePath(path string, fileContents []byte) (*CacheEntry, error) {
 	fileStat, err := os.Stat(path)
+	if err != nil {
+		return nil, err
+	}
+	sha1, err := calculateSha1Hash(fileStat, fileContents)
 	if err != nil {
 		return nil, err
 	}
@@ -85,33 +102,64 @@ func NewCacheEntryFromFilePath(path string) (*CacheEntry, error) {
 		STSize:  uint32(fileStat.Size()),
 		NameLen: uint16(len(path)),
 		Name:    path,
+		Sha1:    sha1,
 	}
 	return entry, nil
 }
 
-func NewCacheEntryFromBinary(indexFileBytes []byte) (*CacheEntry, uint32) {
+func NewCacheEntryFromBytes(indexFileBytes []byte) (*CacheEntry, uint32) {
 	entry := &CacheEntry{}
-	entry.CTime.Sec = binary.LittleEndian.Uint32(indexFileBytes)
-	entry.CTime.NSec = binary.LittleEndian.Uint32(indexFileBytes[4:])
-	entry.MTime.Sec = binary.LittleEndian.Uint32(indexFileBytes[8:])
-	entry.MTime.NSec = binary.LittleEndian.Uint32(indexFileBytes[12:])
-	entry.STDev = binary.LittleEndian.Uint32(indexFileBytes[16:])
-	entry.STIno = binary.LittleEndian.Uint32(indexFileBytes[20:])
-	entry.STMode = binary.LittleEndian.Uint32(indexFileBytes[24:])
-	entry.STUid = binary.LittleEndian.Uint32(indexFileBytes[28:])
-	entry.STGid = binary.LittleEndian.Uint32(indexFileBytes[32:])
-	entry.STSize = binary.LittleEndian.Uint32(indexFileBytes[36:])
+	entry.CTime.Sec = binary.LittleEndian.Uint32(indexFileBytes[:4])
+	entry.CTime.NSec = binary.LittleEndian.Uint32(indexFileBytes[4:8])
+	entry.MTime.Sec = binary.LittleEndian.Uint32(indexFileBytes[8:12])
+	entry.MTime.NSec = binary.LittleEndian.Uint32(indexFileBytes[12:16])
+	entry.STDev = binary.LittleEndian.Uint32(indexFileBytes[16:20])
+	entry.STIno = binary.LittleEndian.Uint32(indexFileBytes[20:24])
+	entry.STMode = binary.LittleEndian.Uint32(indexFileBytes[24:28])
+	entry.STUid = binary.LittleEndian.Uint32(indexFileBytes[28:32])
+	entry.STGid = binary.LittleEndian.Uint32(indexFileBytes[32:36])
+	entry.STSize = binary.LittleEndian.Uint32(indexFileBytes[36:40])
 	entry.Sha1 = indexFileBytes[40:60]
-	entry.NameLen = binary.LittleEndian.Uint16(indexFileBytes[60:])
+	entry.NameLen = binary.LittleEndian.Uint16(indexFileBytes[60:62])
 	entry.Name = string(indexFileBytes[62 : 62+entry.NameLen])
 	return entry, uint32(62 + entry.NameLen)
 }
 
-func ReadCache() (int, error) {
+func ReadCache() (ActiveCache, error) {
 	sha1FileDir := env.GetSHA1FileDirectory()
 	if _, err := os.Stat(sha1FileDir); os.IsExist(err) {
-		return 0, errors.New("SHA1 file directory not found")
+		return nil, errors.New("SHA1 file directory not found")
 	}
-	// TODO: Implement the rest of the function
-	return 0, nil
+	if _, err := os.Stat(fmt.Sprintf("%s/index", sha1FileDir)); os.IsNotExist(err) {
+		return ActiveCache{}, nil
+	}
+	bytes, err := os.ReadFile(fmt.Sprintf("%s/index", sha1FileDir))
+	if err != nil {
+		return nil, err
+	}
+	header := NewCacheHeaderFromBytes(bytes)
+	return header.Entries, nil
+}
+
+type ActiveCache []*CacheEntry
+
+func (ac ActiveCache) FindCacheEntryIndex(targetEntry *CacheEntry) int {
+	for index, entry := range ac {
+		if entry.Name == targetEntry.Name {
+			return index
+		}
+	}
+	return -1
+}
+
+func (ac ActiveCache) WriteCache(file *os.File) error {
+	// SHA1ハッシュとる箇所の自信がない
+	header := NewCacheHeader(1, ac)
+	headerBytes := header.Bytes()
+	file.Write(headerBytes)
+	for _, entry := range ac {
+		entryBytes := entry.Bytes()
+		file.Write(entryBytes)
+	}
+	return nil
 }

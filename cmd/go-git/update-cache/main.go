@@ -11,33 +11,10 @@ import (
 	"github.com/marutaku/go-git/internal/env"
 )
 
-type ActiveCache []*cache.CacheEntry
-
-func (ac ActiveCache) findCacheEntryIndex(path string) int {
-	for index, entry := range ac {
-		if entry.Name == path {
-			return index
-		}
-	}
-	return -1
-}
-
-func (ac ActiveCache) writeCache(file *os.File) error {
-	// SHA1ハッシュとる箇所の自信がない
-	header := cache.NewCacheHeader(1, ac)
-	headerBytes := header.Bytes()
-	file.Write(headerBytes)
-	for _, entry := range ac {
-		entryBytes := entry.Bytes()
-		file.Write(entryBytes)
-	}
-	return nil
-}
-
-var activeCache ActiveCache
+var activeCache cache.ActiveCache
 
 func addCacheEntry(entry *cache.CacheEntry) error {
-	existingEntryIndex := activeCache.findCacheEntryIndex(entry.Name)
+	existingEntryIndex := activeCache.FindCacheEntryIndex(entry)
 	if existingEntryIndex != -1 {
 		activeCache[existingEntryIndex] = entry
 		return nil
@@ -47,10 +24,6 @@ func addCacheEntry(entry *cache.CacheEntry) error {
 }
 
 func addFileToCache(path string) error {
-	entry, err := cache.NewCacheEntryFromFilePath(path)
-	if err != nil {
-		return err
-	}
 	file, err := os.Open(path)
 	if err != nil {
 		return err
@@ -64,7 +37,14 @@ func addFileToCache(path string) error {
 	if err != nil {
 		return err
 	}
-	err = entry.IndexFd(string(fileContent), stat)
+	entry, err := cache.NewCacheEntryFromFilePath(path, fileContent)
+	if err != nil {
+		return err
+	}
+	if activeCache.FindCacheEntryIndex(entry) != -1 {
+		return addCacheEntry(entry)
+	}
+	err = entry.IndexFd(fileContent, stat)
 	if err != nil {
 		return err
 	}
@@ -88,15 +68,12 @@ func renameIndexFile() {
 }
 
 func main() {
+	var err error
 	targetPaths := os.Args[1:]
-	entries, err := cache.ReadCache()
+	activeCache, err = cache.ReadCache()
 	if err != nil {
 		panic(err)
 	}
-	if entries < 0 {
-		log.Fatal("cache corrupted")
-	}
-
 	newIndexFile, err := os.OpenFile(fmt.Sprintf("%s/index.lock", env.GetSHA1FileDirectory()), os.O_RDWR|os.O_CREATE|os.O_EXCL, 0666)
 	if err != nil {
 		panic(err)
@@ -105,14 +82,13 @@ func main() {
 	defer renameIndexFile()
 	for _, path := range targetPaths {
 		if !verifyPath(path) {
-			fmt.Printf("Ignoring path %s\n", path)
 			continue
 		}
 		if err := addFileToCache(path); err != nil {
 			panic(err)
 		}
 	}
-	err = activeCache.writeCache(newIndexFile)
+	err = activeCache.WriteCache(newIndexFile)
 	if err != nil {
 		log.Fatal("unable to write cache")
 	}

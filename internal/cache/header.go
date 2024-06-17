@@ -21,6 +21,22 @@ func NewCacheHeader(version uint32, entries []*CacheEntry) *CacheHeader {
 	}
 }
 
+func NewCacheHeaderFromBytes(bytes []byte) *CacheHeader {
+	header := &CacheHeader{}
+	header.Signature = string(bytes[:4])
+	header.Version = binary.LittleEndian.Uint32(bytes[4:8])
+	entryCount := binary.LittleEndian.Uint32(bytes[8:12])
+	header.Entries = make([]*CacheEntry, entryCount)
+	// sha1ハッシュを読み飛ばす
+	offset := uint32(12 + 20)
+	for i := 0; i < int(entryCount); i++ {
+		entry, size := NewCacheEntryFromBytes(bytes[offset:])
+		header.Entries[i] = entry
+		offset += size
+	}
+	return header
+}
+
 func (h *CacheHeader) Bytes() []byte {
 	bytes := make([]byte, 0)
 	bytes = append(bytes, h.Signature...)
