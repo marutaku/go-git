@@ -7,7 +7,7 @@ import (
 	"errors"
 )
 
-const CACHE_SIGNATURE = "CRID" // 本当は"DIRC"だが、なぜか本家は"CRID"になっている...？
+const CACHE_SIGNATURE = "CRID" // 本当は"DIRC"だが、なぜか本家のindexを見ると"CRID"になっている...？
 
 type CacheHeader struct {
 	Signature string
