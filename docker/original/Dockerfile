@@ -7,7 +7,8 @@ RUN apt-get update && apt-get install -y \
   zlib1g-dev \
   make \
   gcc \ 
-  bsdmainutils
+  bsdmainutils \ 
+  python3
 
 
 
