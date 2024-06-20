@@ -22,6 +22,9 @@ func WriteSha1Buffer(sha1 []byte, buffer []byte) error {
 	fmt.Println(fileName)
 	file, err := os.OpenFile(fileName, os.O_RDWR|os.O_CREATE|os.O_EXCL, 0666)
 	if err != nil {
+		if os.IsExist(err) {
+			return nil
+		}
 		return err
 	}
 	defer file.Close()

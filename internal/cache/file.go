@@ -1,17 +1,21 @@
 package cache
 
 import (
-	"bytes"
-	"compress/zlib"
+	"crypto/sha1"
+	"fmt"
+
+	"github.com/marutaku/go-git/internal/buffer"
+	"github.com/marutaku/go-git/internal/utils"
 )
 
 func WriteSha1File(contents []byte) error {
-	var buffer bytes.Buffer
-	zWriter := zlib.NewWriter(&buffer)
-	zWriter, err := zlib.NewWriterLevel(zWriter, zlib.BestCompression)
+	compressed, err := utils.Compress(contents)
 	if err != nil {
 		return err
 	}
-	zWriter.Write(contents)
-	sha1 := calculateSha1Hash()
+	h := sha1.New()
+	h.Write(compressed)
+	sha1Bytes := h.Sum(nil)
+	fmt.Printf("%x\n", sha1Bytes)
+	return buffer.WriteSha1Buffer(sha1Bytes, compressed)
 }

@@ -60,5 +60,8 @@ func main() {
 	i -= 5
 	copy(buffer[i:], []byte("tree "))
 	offset -= i
-	buffer.WriteSha1Buffer(buffer[i:], buffer[i+5:offset])
+	err = cache.WriteSha1File(buffer[i:])
+	if err != nil {
+		log.Fatal("Failed to write tree: ", err)
+	}
 }

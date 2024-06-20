@@ -92,7 +92,7 @@ func main() {
 		}
 		if err := addFileToCache(path); err != nil {
 			os.Remove(tmpIndexFilePath)
-			log.Fatal(err)
+			log.Fatal("unable to add file to cache: ", err)
 		}
 	}
 	err = activeCache.WriteCache(newIndexFile)
