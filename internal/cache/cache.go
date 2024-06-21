@@ -1,7 +1,6 @@
 package cache
 
 import (
-	"crypto/sha1"
 	"encoding/binary"
 	"errors"
 	"fmt"
@@ -12,6 +11,7 @@ import (
 	objectBuffer "github.com/marutaku/go-git/internal/buffer"
 	"github.com/marutaku/go-git/internal/cache/cachetime"
 	"github.com/marutaku/go-git/internal/env"
+	"github.com/marutaku/go-git/internal/hash"
 	"github.com/marutaku/go-git/internal/utils"
 )
 
@@ -47,20 +47,6 @@ func (e *CacheEntry) Bytes() []byte {
 	return bytes
 }
 
-func calculateSha1Hash(stat fs.FileInfo, fileContent []byte) ([]byte, error) {
-	contents := []byte(fmt.Sprintf("blob %d", uint32(stat.Size())))
-	contents = append(contents, 0)
-	contents = append(contents, []byte(fileContent)...)
-	compressed, err := utils.Compress(contents)
-	if err != nil {
-		return nil, err
-	}
-	h := sha1.New()
-	h.Write(compressed)
-	sha1Bytes := h.Sum(nil)
-	return sha1Bytes, nil
-}
-
 func (e *CacheEntry) IndexFd(fileContent []byte, stat fs.FileInfo) error {
 	contents := []byte(fmt.Sprintf("blob %d", uint32(stat.Size())))
 	contents = append(contents, 0)
@@ -77,7 +63,7 @@ func NewCacheEntryFromFilePath(path string, fileContents []byte) (*CacheEntry, e
 	if err != nil {
 		return nil, err
 	}
-	sha1, err := calculateSha1Hash(fileStat, fileContents)
+	sha1, err := hash.CalculateSha1HashFromFileStat(fileStat, fileContents)
 	if err != nil {
 		return nil, err
 	}
