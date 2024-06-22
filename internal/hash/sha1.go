@@ -42,8 +42,13 @@ func CalculateSha1HashFromBytes(contents []byte) []byte {
 	return sha1Bytes
 }
 
-func GetSha1Hex(sha1Bytes []byte) bool {
+func GetSha1Hex(sha1Bytes []byte) (string, error) {
+	sha1 := ""
 	for i := 0; i < 20; i++ {
-
+		val := hexval(int(sha1Bytes[i]))<<4 | hexval(int(sha1Bytes[i+1]))
+		if val&0x0f != 0 {
+			return "", fmt.Errorf("invalid sha1 byte: %x", val)
+		}
+		sha1 += fmt.Sprintf("%02x", val)
 	}
 }
