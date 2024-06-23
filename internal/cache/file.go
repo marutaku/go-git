@@ -13,7 +13,10 @@ func WriteSha1File(contents []byte) error {
 	if err != nil {
 		return err
 	}
-	sha1Bytes := hash.CalculateSha1HashFromBytes(compressed)
+	sha1Bytes, err := hash.CalculateSha1HashFromFileFromByte(compressed)
+	if err != nil {
+		return err
+	}
 	fmt.Printf("%x\n", sha1Bytes)
 	return buffer.WriteSha1Buffer(sha1Bytes, compressed)
 }

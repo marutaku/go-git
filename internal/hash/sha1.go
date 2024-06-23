@@ -23,6 +23,13 @@ func CalculateSha1HashFromFileStat(stat fs.FileInfo, fileContent []byte) ([]byte
 	return sha1Bytes, nil
 }
 
+func CalculateSha1HashFromFileFromByte(fileContent []byte) ([]byte, error) {
+	h := sha1.New()
+	h.Write(fileContent)
+	sha1Bytes := h.Sum(nil)
+	return sha1Bytes, nil
+}
+
 func GetSha1Hex(sha1Hash string) ([]byte, error) {
 	bytes, err := hex.DecodeString(sha1Hash)
 	if err != nil {
