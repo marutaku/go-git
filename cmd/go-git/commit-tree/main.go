@@ -12,6 +12,29 @@ import (
 )
 
 var MAX_PARENT = 16
+var ORIG_OFFSET = 40
+
+type CommitBuffer struct {
+	buffer []byte
+	offset int
+}
+
+func newBuffer() *CommitBuffer {
+	return &CommitBuffer{
+		buffer: make([]byte, ORIG_OFFSET),
+		offset: 0,
+	}
+}
+
+func (b *CommitBuffer) addBuffer(line string) {
+	lineBytes := []byte(line)
+	if len(lineBytes) >= len(b.buffer)-b.offset {
+		appendBufferSize := (len(lineBytes) + 32767) &^ 32767
+		b.buffer = append(b.buffer, make([]byte, appendBufferSize)...)
+	}
+	copy(b.buffer[b.offset:], lineBytes)
+	b.offset = len(lineBytes)
+}
 
 func getParentSha1s() ([][]byte, error) {
 	// 以下のような形式で親コミットのSHA-1ハッシュ値が渡される
@@ -32,11 +55,12 @@ func getParentSha1s() ([][]byte, error) {
 	return parentSha1s[:parentsCount], nil
 }
 
-func getCommitterName() (string, error) {
+func getRealCommitterName() (string, error) {
+	// var username string
+	// if os.Getenv("COMMITTER_NAME") != "" {
+	// 	return os.Getenv("COMMITTER_NAME"), nil
+	// }
 	var username string
-	if os.Getenv("COMMITTER_NAME") != "" {
-		return os.Getenv("COMMITTER_NAME"), nil
-	}
 	user, err := user.Current()
 	if err != nil {
 		return "", err
@@ -45,10 +69,10 @@ func getCommitterName() (string, error) {
 	return username, nil
 }
 
-func getCommitterEmail() (string, error) {
-	if os.Getenv("COMMITTER_EMAIL") != "" {
-		return os.Getenv("COMMITTER_EMAIL"), nil
-	}
+func getRealCommitterEmail() (string, error) {
+	// if os.Getenv("COMMITTER_EMAIL") != "" {
+	// 	return os.Getenv("COMMITTER_EMAIL"), nil
+	// }
 	user, err := user.Current()
 	if err != nil {
 		return "", err
@@ -85,17 +109,38 @@ func main() {
 	if len(parentSha1s) == 0 {
 		fmt.Printf("Committing initial tree %s\n", os.Args[1])
 	}
-	committerName, err := getCommitterName()
+	realCommitterName, err := getRealCommitterName()
 	if err != nil {
 		log.Fatal(err)
 	}
-	committerEmail, err := getCommitterEmail()
+	realCommitterEmail, err := getRealCommitterEmail()
 	if err != nil {
 		log.Fatal(err)
 	}
-	committerDate, err := getCommitterDate()
+	realCommitterDate, err := getCommitterDate()
 	if err != nil {
 		log.Fatal(err)
 	}
-
+	var committerName, committerEmail string
+	if committerName = os.Getenv("GIT_COMMITTER_NAME"); committerName == "" {
+		committerName = realCommitterName
+	}
+	if committerEmail = os.Getenv("GIT_COMMITTER_EMAIL"); committerEmail == "" {
+		committerEmail = realCommitterEmail
+	}
+	committerDate := realCommitterDate
+	if os.Getenv("GIT_COMMITTER_DATE") != "" {
+		committerDate, err = time.Parse(time.RFC3339, os.Getenv("GIT_COMMITTER_DATE"))
+		if err != nil {
+			log.Fatal(err)
+		}
+	}
+	// TODO: remove_special
+	buffer := newBuffer()
+	buffer.addBuffer(fmt.Sprintf("tree %s\n", treeSha1))
+	for _, parentSha1 := range parentSha1s {
+		buffer.addBuffer(fmt.Sprintf("parent %s\n", parentSha1))
+	}
+	buffer.addBuffer(fmt.Sprintf("author %s <%s> %d +0000\n", realCommitterName, realCommitterEmail, realCommitterDate.Unix()))
+	buffer.addBuffer(fmt.Sprintf("committer %s <%s> %d +0000\n", committerName, committerEmail, committerDate.Unix()))
 }
