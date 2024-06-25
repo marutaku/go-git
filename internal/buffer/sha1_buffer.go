@@ -34,7 +34,7 @@ func WriteSha1Buffer(sha1 []byte, buffer []byte) error {
 
 func PrependInteger(buffer []byte, value int, offset int) int {
 	// 本当は'\0'が入る
-	buffer[offset-1] = 0
+	buffer[offset-1] = '\x00'
 	offset--
 	for value > 0 {
 		buffer[offset] = '0' + byte(value%10)

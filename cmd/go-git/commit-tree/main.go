@@ -8,6 +8,8 @@ import (
 
 	"os/user"
 
+	"github.com/marutaku/go-git/internal/buffer"
+	"github.com/marutaku/go-git/internal/cache"
 	"github.com/marutaku/go-git/internal/hash"
 )
 
@@ -22,7 +24,7 @@ type CommitBuffer struct {
 func newBuffer() *CommitBuffer {
 	return &CommitBuffer{
 		buffer: make([]byte, ORIG_OFFSET),
-		offset: 0,
+		offset: ORIG_OFFSET,
 	}
 }
 
@@ -36,12 +38,20 @@ func (b *CommitBuffer) addBuffer(line string) {
 	b.offset = len(lineBytes)
 }
 
+func (b *CommitBuffer) finishBuffer(tag string) {
+	offset := buffer.PrependInteger(b.buffer, b.offset-ORIG_OFFSET, ORIG_OFFSET)
+	tagLen := len(tag)
+	offset -= tagLen
+	copy(b.buffer[offset:], []byte(tag))
+	b.offset -= offset
+}
+
 func getParentSha1s() ([][]byte, error) {
 	// 以下のような形式で親コミットのSHA-1ハッシュ値が渡される
 	// -p [parent sha1] -p [parent sha1] ...
 	parentsCount := 0
 	parentSha1s := make([][]byte, MAX_PARENT)
-	for i := 2; i < len(parentSha1s); i += 2 {
+	for i := 2; i < len(os.Args); i += 2 {
 		if os.Args[i] != "-p" {
 			return nil, fmt.Errorf("invalid option: %s", os.Args[i])
 		}
@@ -141,6 +151,11 @@ func main() {
 	for _, parentSha1 := range parentSha1s {
 		buffer.addBuffer(fmt.Sprintf("parent %s\n", parentSha1))
 	}
-	buffer.addBuffer(fmt.Sprintf("author %s <%s> %d +0000\n", realCommitterName, realCommitterEmail, realCommitterDate.Unix()))
-	buffer.addBuffer(fmt.Sprintf("committer %s <%s> %d +0000\n", committerName, committerEmail, committerDate.Unix()))
+	buffer.addBuffer(fmt.Sprintf("author %s <%s> %d\n", realCommitterName, realCommitterEmail, realCommitterDate.Unix()))
+	buffer.addBuffer(fmt.Sprintf("committer %s <%s> %d\n", committerName, committerEmail, committerDate.Unix()))
+	var comment string
+	fmt.Scan(&comment)
+	buffer.addBuffer(comment)
+	buffer.finishBuffer("commit ")
+	cache.WriteSha1File(buffer.buffer)
 }
