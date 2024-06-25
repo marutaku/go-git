@@ -37,8 +37,9 @@ func main() {
 			size = ((requiredSpace) + 16) * 3 / 2
 			treeBuffer = append(treeBuffer, make([]byte, size-len(treeBuffer))...)
 		}
-		copy(treeBuffer[offset:], []byte(fmt.Sprintf("%o %s", entry.STMode, entry.Name)))
-		offset += requiredSpace
+		contentBytes := []byte(fmt.Sprintf("%o %s", entry.STMode, entry.Name))
+		copy(treeBuffer[offset:], contentBytes)
+		offset += len(contentBytes)
 		treeBuffer[offset+1] = 0
 		offset++
 		copy(treeBuffer[offset:], entry.Sha1)
@@ -47,8 +48,7 @@ func main() {
 	i := buffer.PrependInteger(treeBuffer, offset-ORIG_OFFSET, ORIG_OFFSET)
 	i -= 5
 	copy(treeBuffer[i:], []byte("tree "))
-	offset -= i
-	err = cache.WriteSha1File(treeBuffer[i:])
+	err = cache.WriteSha1File(treeBuffer[i:offset])
 	if err != nil {
 		log.Fatal("Failed to write tree: ", err)
 	}

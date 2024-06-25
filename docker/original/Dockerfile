@@ -23,4 +23,6 @@ RUN curl -sL https://github.com/git/git/archive/e83c5163316f89bfbde7d9ab23ca2e25
 
 ENV PATH="/${HOME}/bin:${PATH}"
 
+COPY decompress.py /original-git/decompress.py
+
 CMD [ "/bin/bash" ]
