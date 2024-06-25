@@ -35,15 +35,15 @@ func (b *CommitBuffer) addBuffer(line string) {
 		b.buffer = append(b.buffer, make([]byte, appendBufferSize)...)
 	}
 	copy(b.buffer[b.offset:], lineBytes)
-	b.offset = len(lineBytes)
+	b.offset += len(lineBytes)
 }
 
 func (b *CommitBuffer) finishBuffer(tag string) {
-	offset := buffer.PrependInteger(b.buffer, b.offset-ORIG_OFFSET, ORIG_OFFSET)
+	start := buffer.PrependInteger(b.buffer, b.offset-ORIG_OFFSET, ORIG_OFFSET)
 	tagLen := len(tag)
-	offset -= tagLen
-	copy(b.buffer[offset:], []byte(tag))
-	b.offset -= offset
+	start -= tagLen
+	copy(b.buffer[start:], []byte(tag))
+	b.buffer = b.buffer[start:b.offset]
 }
 
 func getParentSha1s() ([][]byte, error) {
