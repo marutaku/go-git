@@ -17,13 +17,19 @@ func unpack(sha1 []byte) error {
 	if nodeType != "tree" {
 		return fmt.Errorf("invalid node type: %s", nodeType)
 	}
-	fileInfos := bytes.Split(byteBuffer, []byte(" "))
-	for _, fileInfo := range fileInfos {
+	size := len(byteBuffer)
+	offset := 0
+	for offset < size {
 		var mode int
 		var name string
-		fmt.Println(string(fileInfo))
-		splitted := bytes.Split(fileInfo, []byte("\x00"))
-		fmt.Sscanf(string(splitted[0]), "%o %s (%x)\n", &mode, &name, splitted[1])
+		var sha1 []byte
+		nullByteIndex := bytes.IndexByte(byteBuffer[offset:], 0)
+		fileInfo := string(byteBuffer[offset : offset+nullByteIndex])
+		fmt.Sscanf(fileInfo, "%o %s", &mode, &name)
+		offset += nullByteIndex + 1
+		sha1 = byteBuffer[offset : offset+20]
+		fmt.Printf("%o %s (%x)\n", mode, name, sha1)
+		offset += 20
 	}
 	return nil
 }

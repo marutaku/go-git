@@ -40,11 +40,9 @@ func ReadSha1File(sha1 []byte) (string, []byte, error) {
 	if err != nil {
 		return "", nil, err
 	}
-	fmt.Printf("%x \n", decompressed)
-	splittedBytes := bytes.SplitN(decompressed, []byte("\x00"), 1)
-	fmt.Printf("splittedByteLength: %d\n", len(splittedBytes))
+	splittedBytes := bytes.Split(decompressed, []byte{0})
 	headerBytes := splittedBytes[0]
-	header := string(headerBytes[0])
-	fmt.Sscanf(header, "%10s %d", nodeType, bodySize)
-	return nodeType, splittedBytes[1], nil
+	header := string(headerBytes)
+	fmt.Sscanf(header, "%s %d", &nodeType, &bodySize)
+	return nodeType, bytes.Join(splittedBytes[1:], []byte{0}), nil
 }

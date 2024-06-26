@@ -40,8 +40,8 @@ func main() {
 		contentBytes := []byte(fmt.Sprintf("%o %s", entry.STMode, entry.Name))
 		copy(treeBuffer[offset:], contentBytes)
 		offset += len(contentBytes)
-		treeBuffer[offset+1] = 0
 		offset++
+		treeBuffer[offset] = byte(0)
 		copy(treeBuffer[offset:], entry.Sha1)
 		offset += 20
 	}

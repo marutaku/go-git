@@ -22,16 +22,16 @@ func Compress(contents []byte) ([]byte, error) {
 }
 
 func Decompress(compressed []byte) ([]byte, error) {
-	reader := bytes.NewReader(compressed)
-	zr, err := zlib.NewReader(reader)
+	byteReader := bytes.NewReader(compressed)
+	zr, err := zlib.NewReader(byteReader)
 	if err != nil {
 		return nil, err
 	}
 	defer zr.Close()
-	var decompressed bytes.Buffer
-	if _, err := io.Copy(&decompressed, zr); err != nil {
+	var decompressed []byte
+	writer := bytes.NewBuffer(decompressed)
+	if _, err := io.Copy(writer, zr); err != nil {
 		return nil, err
 	}
-
-	return decompressed.Bytes(), nil
+	return writer.Bytes(), nil
 }
