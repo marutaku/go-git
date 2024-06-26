@@ -9,7 +9,6 @@ import (
 	"os/user"
 
 	"github.com/marutaku/go-git/internal/buffer"
-	"github.com/marutaku/go-git/internal/cache"
 	"github.com/marutaku/go-git/internal/hash"
 )
 
@@ -146,16 +145,19 @@ func main() {
 		}
 	}
 	// TODO: remove_special
-	buffer := newBuffer()
-	buffer.addBuffer(fmt.Sprintf("tree %s\n", treeSha1))
+	commitBuffer := newBuffer()
+	commitBuffer.addBuffer(fmt.Sprintf("tree %s\n", treeSha1))
 	for _, parentSha1 := range parentSha1s {
-		buffer.addBuffer(fmt.Sprintf("parent %s\n", parentSha1))
+		commitBuffer.addBuffer(fmt.Sprintf("parent %s\n", parentSha1))
 	}
-	buffer.addBuffer(fmt.Sprintf("author %s <%s> %d\n", realCommitterName, realCommitterEmail, realCommitterDate.Unix()))
-	buffer.addBuffer(fmt.Sprintf("committer %s <%s> %d\n", committerName, committerEmail, committerDate.Unix()))
+	commitBuffer.addBuffer(fmt.Sprintf("author %s <%s> %d\n", realCommitterName, realCommitterEmail, realCommitterDate.Unix()))
+	commitBuffer.addBuffer(fmt.Sprintf("committer %s <%s> %d\n", committerName, committerEmail, committerDate.Unix()))
 	var comment string
 	fmt.Scan(&comment)
-	buffer.addBuffer(comment)
-	buffer.finishBuffer("commit ")
-	cache.WriteSha1File(buffer.buffer)
+	commitBuffer.addBuffer(comment)
+	commitBuffer.finishBuffer("commit ")
+	err = buffer.WriteSha1File(commitBuffer.buffer)
+	if err != nil {
+		log.Fatal(err)
+	}
 }
