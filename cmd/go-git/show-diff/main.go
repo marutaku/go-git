@@ -9,9 +9,9 @@ import (
 	"os/exec"
 	"syscall"
 
-	"github.com/marutaku/go-git/internal/buffer"
 	"github.com/marutaku/go-git/internal/cache"
 	"github.com/marutaku/go-git/internal/cache/cachetime"
+	"github.com/marutaku/go-git/internal/objects"
 )
 
 var (
@@ -87,7 +87,7 @@ func main() {
 		}
 		fmt.Printf("%.*s: %02x", entry.NameLen, entry.Name, entry.Sha1)
 		fmt.Print("\n")
-		_, new, err := buffer.ReadSha1File(entry.Sha1)
+		_, new, err := objects.ReadSha1File(entry.Sha1)
 		if err != nil {
 			log.Fatal(err)
 		}

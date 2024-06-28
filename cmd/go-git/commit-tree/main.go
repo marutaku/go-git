@@ -8,8 +8,8 @@ import (
 
 	"os/user"
 
-	"github.com/marutaku/go-git/internal/buffer"
 	"github.com/marutaku/go-git/internal/hash"
+	"github.com/marutaku/go-git/internal/objects"
 )
 
 var MAX_PARENT = 16
@@ -38,7 +38,7 @@ func (b *CommitBuffer) addBuffer(line string) {
 }
 
 func (b *CommitBuffer) finishBuffer(tag string) {
-	start := buffer.PrependInteger(b.buffer, b.offset-ORIG_OFFSET, ORIG_OFFSET)
+	start := objects.PrependInteger(b.buffer, b.offset-ORIG_OFFSET, ORIG_OFFSET)
 	tagLen := len(tag)
 	start -= tagLen
 	copy(b.buffer[start:], []byte(tag))
@@ -156,7 +156,7 @@ func main() {
 	fmt.Scan(&comment)
 	commitBuffer.addBuffer(comment)
 	commitBuffer.finishBuffer("commit ")
-	err = buffer.WriteSha1File(commitBuffer.buffer)
+	err = objects.WriteSha1File(commitBuffer.buffer)
 	if err != nil {
 		log.Fatal(err)
 	}

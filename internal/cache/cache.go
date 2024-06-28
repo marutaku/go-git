@@ -8,10 +8,10 @@ import (
 	"os"
 	"syscall"
 
-	objectBuffer "github.com/marutaku/go-git/internal/buffer"
 	"github.com/marutaku/go-git/internal/cache/cachetime"
 	"github.com/marutaku/go-git/internal/env"
 	"github.com/marutaku/go-git/internal/hash"
+	objectBuffer "github.com/marutaku/go-git/internal/objects"
 	"github.com/marutaku/go-git/internal/utils"
 )
 

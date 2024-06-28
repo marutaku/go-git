@@ -6,7 +6,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/marutaku/go-git/internal/buffer"
+	"github.com/marutaku/go-git/internal/objects"
 )
 
 func main() {
@@ -17,7 +17,7 @@ func main() {
 	if err != nil {
 		log.Fatal("cat-file: cat-file <sha1>")
 	}
-	nodeType, buf, err := buffer.ReadSha1File(sha1)
+	nodeType, buf, err := objects.ReadSha1File(sha1)
 	if err != nil {
 		log.Fatal(err)
 	}

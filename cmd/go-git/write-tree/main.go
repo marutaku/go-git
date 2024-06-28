@@ -5,14 +5,14 @@ import (
 	"log"
 	"os"
 
-	"github.com/marutaku/go-git/internal/buffer"
 	"github.com/marutaku/go-git/internal/cache"
+	"github.com/marutaku/go-git/internal/objects"
 )
 
 var ORIG_OFFSET = 40
 
 func checkValidSha1(sha1Hash []byte) bool {
-	fileName := buffer.GetSha1FileName(sha1Hash)
+	fileName := objects.GetSha1FileName(sha1Hash)
 	_, err := os.Stat(fileName)
 	return err == nil
 }
@@ -45,10 +45,10 @@ func main() {
 		copy(treeBuffer[offset:], entry.Sha1)
 		offset += 20
 	}
-	i := buffer.PrependInteger(treeBuffer, offset-ORIG_OFFSET, ORIG_OFFSET)
+	i := objects.PrependInteger(treeBuffer, offset-ORIG_OFFSET, ORIG_OFFSET)
 	i -= 5
 	copy(treeBuffer[i:], []byte("tree "))
-	err = buffer.WriteSha1File(treeBuffer[i:offset])
+	err = objects.WriteSha1File(treeBuffer[i:offset])
 	if err != nil {
 		log.Fatal("Failed to write tree: ", err)
 	}

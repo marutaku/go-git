@@ -1,4 +1,4 @@
-package buffer
+package objects
 
 import (
 	"fmt"
@@ -19,7 +19,6 @@ func GetSha1FileName(sha1 []byte) string {
 
 func WriteSha1Buffer(sha1 []byte, buffer []byte) error {
 	fileName := GetSha1FileName(sha1)
-	fmt.Println(fileName)
 	file, err := os.OpenFile(fileName, os.O_RDWR|os.O_CREATE|os.O_EXCL, 0666)
 	if err != nil {
 		if os.IsExist(err) {

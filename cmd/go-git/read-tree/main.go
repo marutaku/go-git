@@ -6,11 +6,11 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/marutaku/go-git/internal/buffer"
+	"github.com/marutaku/go-git/internal/objects"
 )
 
 func unpack(sha1 []byte) error {
-	nodeType, byteBuffer, err := buffer.ReadSha1File(sha1)
+	nodeType, byteBuffer, err := objects.ReadSha1File(sha1)
 	if err != nil {
 		return err
 	}
