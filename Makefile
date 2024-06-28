@@ -1,7 +1,7 @@
 
 BIN_DIR=bin
 
-PROG=init-db update-cache write-tree commit-tree read-tree cat-file
+PROG=init-db update-cache write-tree commit-tree read-tree cat-file show-diff
 
 all: ${PROG}
 
@@ -22,6 +22,9 @@ read-tree: ./cmd/go-git/read-tree/main.go
 
 cat-file: ./cmd/go-git/cat-file/main.go
 	go build -o ${BIN_DIR}/cat-file ./cmd/go-git/cat-file/main.go
+
+show-diff: ./cmd/go-git/show-diff/main.go
+	go build -o ${BIN_DIR}/show-diff ./cmd/go-git/show-diff/main.go
 
 .PHONY: clean
 clean:
