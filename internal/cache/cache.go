@@ -102,7 +102,8 @@ func NewCacheEntryFromBytes(indexFileBytes []byte) (*CacheEntry, uint32) {
 	entry.Sha1 = indexFileBytes[40:60]
 	entry.NameLen = binary.LittleEndian.Uint16(indexFileBytes[60:62])
 	entry.Name = string(indexFileBytes[62 : 62+entry.NameLen])
-	return entry, uint32(62 + entry.NameLen)
+	size := (62 + len(entry.Name) + 8) & ^7
+	return entry, uint32(size)
 }
 
 func ReadCache() (ActiveCache, error) {
