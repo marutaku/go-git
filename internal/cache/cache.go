@@ -30,20 +30,21 @@ type CacheEntry struct {
 }
 
 func (e *CacheEntry) Bytes() []byte {
-	bytes := make([]byte, 0)
-	bytes = binary.LittleEndian.AppendUint32(bytes, e.CTime.Sec)
-	bytes = binary.LittleEndian.AppendUint32(bytes, e.CTime.NSec)
-	bytes = binary.LittleEndian.AppendUint32(bytes, e.MTime.Sec)
-	bytes = binary.LittleEndian.AppendUint32(bytes, e.MTime.NSec)
-	bytes = binary.LittleEndian.AppendUint32(bytes, e.STDev)
-	bytes = binary.LittleEndian.AppendUint32(bytes, e.STIno)
-	bytes = binary.LittleEndian.AppendUint32(bytes, e.STMode)
-	bytes = binary.LittleEndian.AppendUint32(bytes, e.STUid)
-	bytes = binary.LittleEndian.AppendUint32(bytes, e.STGid)
-	bytes = binary.LittleEndian.AppendUint32(bytes, e.STSize)
-	bytes = append(bytes, e.Sha1[:]...)
-	bytes = binary.LittleEndian.AppendUint16(bytes, e.NameLen)
-	bytes = append(bytes, []byte(e.Name)...)
+	size := (62 + len(e.Name) + 8) & ^7
+	bytes := make([]byte, size)
+	binary.LittleEndian.PutUint32(bytes[0:], e.CTime.Sec)
+	binary.LittleEndian.PutUint32(bytes[4:], e.CTime.NSec)
+	binary.LittleEndian.PutUint32(bytes[8:], e.MTime.Sec)
+	binary.LittleEndian.PutUint32(bytes[12:], e.MTime.NSec)
+	binary.LittleEndian.PutUint32(bytes[16:], e.STDev)
+	binary.LittleEndian.PutUint32(bytes[20:], e.STIno)
+	binary.LittleEndian.PutUint32(bytes[24:], e.STMode)
+	binary.LittleEndian.PutUint32(bytes[28:], e.STUid)
+	binary.LittleEndian.PutUint32(bytes[32:], e.STGid)
+	binary.LittleEndian.PutUint32(bytes[36:], e.STSize)
+	copy(bytes[40:], e.Sha1)
+	binary.LittleEndian.PutUint16(bytes[60:], e.NameLen)
+	copy(bytes[62:], []byte(e.Name))
 	return bytes
 }
 
