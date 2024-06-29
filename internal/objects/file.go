@@ -51,7 +51,7 @@ func ReadSha1File(sha1 []byte) (string, []byte, error) {
 func GetSha1FileName(sha1 []byte) string {
 	sha1FileDirectory := env.GetSHA1FileDirectory()
 	sha1Str := fmt.Sprintf("%x", sha1)
-	return fmt.Sprintf("%s/%s/%s", sha1FileDirectory, sha1Str[:2], sha1Str[2:])
+	return fmt.Sprintf("%s/objects/%s/%s", sha1FileDirectory, sha1Str[:2], sha1Str[2:])
 }
 
 func WriteSha1Buffer(sha1 []byte, buffer []byte) error {
