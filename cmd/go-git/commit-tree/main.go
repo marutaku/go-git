@@ -65,10 +65,6 @@ func getParentSha1s() ([][]byte, error) {
 }
 
 func getRealCommitterName() (string, error) {
-	// var username string
-	// if os.Getenv("COMMITTER_NAME") != "" {
-	// 	return os.Getenv("COMMITTER_NAME"), nil
-	// }
 	var username string
 	user, err := user.Current()
 	if err != nil {
@@ -79,9 +75,6 @@ func getRealCommitterName() (string, error) {
 }
 
 func getRealCommitterEmail() (string, error) {
-	// if os.Getenv("COMMITTER_EMAIL") != "" {
-	// 	return os.Getenv("COMMITTER_EMAIL"), nil
-	// }
 	user, err := user.Current()
 	if err != nil {
 		return "", err

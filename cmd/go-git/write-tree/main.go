@@ -20,7 +20,7 @@ func checkValidSha1(sha1Hash []byte) bool {
 func main() {
 	entries, err := cache.ReadCache()
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 	if len(entries) == 0 {
 		log.Fatal("No file-cache to create a tree of \n")
